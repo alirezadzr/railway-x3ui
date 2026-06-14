@@ -3,36 +3,37 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Tehran
 
-# Update and install essentials (WITHOUT nodejs from ubuntu repo)
+# Install essentials
 RUN apt-get update && apt-get install -y \
     curl wget git vim nano htop \
     python3 python3-pip \
-    php php-cli php-curl php-mbstring php-mysql \
-    mysql-client \
+    php php-cli \
     nginx \
     build-essential \
     unzip zip \
     sudo \
     tzdata \
-    ttyd \
-    && apt-get clean
+    ca-certificates \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20 (remove conflicting packages first)
+# Install Node.js 20
 RUN apt-get remove -y libnode-dev libnode72 nodejs nodejs-doc npm 2>/dev/null || true \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && apt-get clean
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install ttyd from binary (most reliable way)
+RUN curl -Lo /usr/local/bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 \
+    && chmod +x /usr/local/bin/ttyd
 
 # Install useful global npm packages
 RUN npm install -g pm2 serve
 
-# Set root password
-RUN echo 'root:root123' | chpasswd
+# Create working directories
+RUN mkdir -p /root/main/arvin
 
-# Create working directory
-WORKDIR /root/workspace
+WORKDIR /root/main/arvin
 
-# Copy startup script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
